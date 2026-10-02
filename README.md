@@ -19,23 +19,9 @@ Built for the AWS Builder Center *Zero to Shipped* hackathon · Personal Express
 
 ## How it works
 
-```mermaid
-flowchart LR
-  B[Browser] -->|HTTPS| API["Lambda Function URL (bil-api)<br/>website + /api"]
-  API --> DB[("DynamoDB<br/>stories, accounts, postcards")]
-  API -->|presigned upload| S3[("S3 media bucket")]
-  S3 -->|Object Created| EB[EventBridge]
-  EB --> W["Lambda (bil-worker)"]
-  W --> TR[Amazon Transcribe]
-  TR -->|Job State Change| EB
-  API -->|async invoke: written story, narration| W
-  W --> AI["AI writing helper<br/>(external LLM API)"]
-  W -. fallback .-> TL[Amazon Translate]
-  W --> CP["Amazon Comprehend<br/>personal data, mood, language"]
-  W --> PL[Amazon Polly]
-  PL --> S3
-  CW[CloudWatch alarms] --> SNS[SNS email]
-```
+[![Architecture of Before I Leave on AWS](docs/architecture.png)](docs/architecture.svg)
+
+*Built with the official AWS Architecture Icons. Click the diagram for the full-resolution SVG.*
 
 1. **Spoken story:** the browser uploads the recording straight to S3 with a presigned POST. EventBridge starts an Amazon Transcribe job; its completion event triggers the worker.
 2. **Written story:** the API invokes the worker directly. There is no recording and no transcription.
