@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Tell your story - Before I Leave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="share">
+  <header class="site"><div class="airmail"></div><div class="wrap">
+    <a class="brand" href="index.html">Before <span>I Leave</span></a>
+    <nav class="row" id="nav"></nav>
+  </div></header>
+  <main class="wrap narrow">
+    <section class="hero">
+      <span class="kicker">Dear whoever comes next,</span>
+      <h1>What would you leave behind?</h1>
+      <p class="lead">Speak for up to 5 minutes, or write it down, in any language. You'll check the text before anything is published.</p>
+    </section>
+
+    <section class="panel promise" aria-labelledby="promiseTitle">
+      <div class="airmail"></div>
+      <h2 class="hand" id="promiseTitle">Our promise</h2>
+      <ul>
+        <li><span aria-hidden="true">&#127897;&#65039;</span><p><strong>Your voice stays yours.</strong> Your recording is deleted as soon as your story is written. Listeners hear a narrator voice, never you.</p></li>
+        <li><span aria-hidden="true">&#9997;&#65039;</span><p><strong>Nothing is posted without your signature.</strong> You check every word first.</p></li>
+        <li><span aria-hidden="true">&#128581;</span><p><strong>No email needed.</strong> No ads, no trackers. Post anonymously if you like.</p></li>
+        <li><span aria-hidden="true">&#128465;&#65039;</span><p><strong>Delete your story or your whole account any time.</strong></p></li>
+      </ul>
+    </section>
+
+    <div class="panel hidden" id="needLogin">
+      <h2>One quick step first</h2>
+      <p>Create an account with just a username and password, no email needed.</p>
+      <div class="actions"><a class="btn" href="account.html?next=share.html">Sign in or create account</a></div>
+    </div>
+
+    <form id="form" class="hidden" novalidate>
+      <div class="panel">
+        <h2>Need an idea?</h2>
+        <div class="prompts">
+          <div class="prompt">The place you're about to leave, and what you'll miss most.</div>
+          <div class="prompt">How you ended up here in the first place.</div>
+          <div class="prompt">A moment you'll never forget: funny, scary or surprising.</div>
+          <div class="prompt">The advice you'd give whoever comes after you.</div>
+          <div class="prompt">The person who made this place feel like home.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>How do you want to tell it?</h2>
+        <div class="segmented" role="group" aria-label="Speak or write">
+          <button type="button" id="modeSpeak" aria-pressed="true">&#127897;&#65039; Speak</button>
+          <button type="button" id="modeWrite" aria-pressed="false">&#9997;&#65039; Write</button>
+        </div>
+        <div class="two">
+          <div>
+            <label for="language" id="languageLabel">Language you'll speak</label>
+            <select id="language"><option value="auto">Not sure (detect it)</option></select>
+          </div>
+          <div>
+            <label for="voice">Narration voice</label>
+            <select id="voice"><option value="female">Female voice</option><option value="male">Male voice</option></select>
+          </div>
+        </div>
+        <p class="hint">Choosing your language makes the text more accurate.</p>
+
+        <div id="speakBox">
+          <div class="recorder">
+            <button type="button" class="mic" id="rec" aria-label="Start recording">Tap to record</button>
+            <div class="timer" id="timer">0:00</div>
+            <div class="meter" id="meter" aria-hidden="true"><i id="meterFill"></i></div>
+            <p class="rec-hint" id="recHint">Speak for at least 30 seconds, up to 5 minutes.</p>
+            <audio id="preview" controls class="hidden"></audio>
+          </div>
+          <details class="more">
+            <summary>Or upload a recording instead</summary>
+            <label for="file">Voice note or audio file</label>
+            <input type="file" id="file" accept="audio/*">
+          </details>
+          <details class="more">
+            <summary>Add a title or photo (optional)</summary>
+            <label for="title">Title</label>
+            <input type="text" id="title" maxlength="90" placeholder="We'll suggest one if you leave this empty">
+            <label for="photo">Cover photo</label>
+            <input type="file" id="photo" accept="image/jpeg,image/png,image/webp">
+          </details>
+        </div>
+
+        <div id="writeBox" class="hidden">
+          <label for="wTitle">Title (optional)</label>
+          <input type="text" id="wTitle" maxlength="90" placeholder="We'll suggest one if you leave this empty">
+          <label for="wText">Your story</label>
+          <textarea id="wText" class="write-area" maxlength="3000" placeholder="Write it the way you would tell a friend."></textarea>
+          <div class="counter"><span id="wCount">0</span> / 3,000 characters</div>
+          <p class="label-like">What should we do with your words?</p>
+          <div class="choice">
+            <label><input type="radio" name="wMode" value="keep" checked><span><b>Keep my words</b><span class="hint">We only translate it. Your sentences stay exactly as you wrote them.</span></span></label>
+            <label><input type="radio" name="wMode" value="polish"><span><b>Polish my writing</b><span class="hint">Our AI writing helper fixes grammar and makes it flow, without adding anything. You'll check it before it's posted.</span></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <label class="check"><input type="checkbox" id="anon">
+          <span><strong>Post anonymously</strong><br><span class="hint">Your postcard will say "from a stranger" instead of your username. People can still write back to you, without either of you seeing the other's name.</span></span></label>
+        <label class="check"><input type="checkbox" id="consent">
+          <span>I'm happy for my story (the text and an AI narration, never my original recording) to be published after I review it. I won't name people in a way that could hurt them.</span></label>
+        <div class="actions"><button type="submit" class="btn" id="submit">Post my story</button></div>
+        <ol class="stepper hidden" id="stepper">
+          <li data-step="upload">Posting your recording</li>
+          <li data-step="listen">Sorting the words</li>
+          <li data-step="write">Translating into English</li>
+          <li data-step="ready">Ready for your signature</li>
+        </ol>
+        <div class="wait hidden" id="wait">
+          <p class="wait-now" id="waitNow"></p>
+          <p class="hint">This usually takes under a minute. You can leave this page; your story will be waiting in <a href="mine.html">My stories</a>.</p>
+        </div>
+        <div class="status hidden" id="status" role="status" aria-live="polite"></div>
+      </div>
+    </form>
+  </main>
+  <footer class="site"><div class="wrap"><span class="hand">Sent with love</span> · No ads. No trackers. Your recording is deleted once your story is written.</div></footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+    "eventVersion": "1.11",
+    "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDARQAQENM5VTZAPCSXU",
+        "arn": "arn:aws:iam::103113059131:user/dev_user",
+        "accountId": "103113059131",
+        "accessKeyId": "[HIDDEN_DUE_TO_SECURITY_REASONS]",
+        "userName": "dev_user",
+        "sessionContext": {
+            "attributes": {
+                "creationDate": "2026-09-24T13:41:17Z",
+                "mfaAuthenticated": "false"
+            },
+            "signInSessionArn": "arn:aws:signin:us-east-1:103113059131:session/d5ffd163-eac1-4ef9-95f1-7bdb23256b88"
+        }
+    },
+    "eventTime": "2026-09-24T13:58:55Z",
+    "eventSource": "aws-mcp.amazonaws.com",
+    "eventName": "CallReadWriteTool",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "[HIDDEN_DUE_TO_SECURITY_REASONS]",
+    "userAgent": "python-httpx/0.28.1 mcp-proxy-for-aws/1.7.0 claude-code/2.1.281",
+    "requestParameters": {
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "id": 4,
+        "params": {
+            "name": "aws___run_script",
+            "_meta": "[HIDDEN_DUE_TO_SECURITY_REASONS]",
+            "arguments": "[HIDDEN_DUE_TO_SECURITY_REASONS]"
+        }
+    },
+    "responseElements": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": "[HIDDEN_DUE_TO_SECURITY_REASONS]"
+    },
+    "additionalEventData": {
+        "downstreamRequests": [
+            {
+                "apiName": "sts:GetCallerIdentity",
+                "requestId": "875ee5b5-d8a3-48b8-aac4-790b0ae61aec",
+                "awsRegion": "us-east-1"
+            }
+        ]
+    },
+    "requestID": "c83bb3ae-813f-4680-9698-7b3d7f2c3a3e",
+    "eventID": "7ce70037-38ab-4320-a06c-a7d6fa149902",
+    "readOnly": false,
+    "eventType": "AwsMcpEvent",
+    "managementEvent": true,
+    "recipientAccountId": "103113059131",
+    "eventCategory": "Management"
+}

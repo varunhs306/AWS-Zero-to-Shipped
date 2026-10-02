@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Before I Leave</title>
+  <meta name="description" content="The stories worth leaving behind, told in your own voice and heard in two languages.">
+  <link rel="preload" href="fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="index">
+  <header class="site"><div class="airmail"></div><div class="wrap">
+    <a class="brand" href="index.html">Before <span>I Leave</span></a>
+    <nav class="row" id="nav"></nav>
+  </div></header>
+  <main class="wrap">
+    <section class="hero home-hero">
+      <div>
+        <span class="kicker">Sent with love,</span>
+        <h1>Every place you leave keeps a <mark>story</mark>.</h1>
+        <p class="lead">A city, a job, a school, a home country, a house full of memories. Speak or write in any language. We turn it into a postcard people can read and hear, in English and in your own words.</p>
+        <div class="cta">
+          <a class="btn" href="share.html">Tell your story</a>
+          <a class="btn secondary" href="#stories-section">Read stories</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="postcard pat-heartwarming">
+          <div class="postmark">Any<br>language</div>
+          <div class="stamp heartwarming"><i>Your story</i></div>
+          <span class="from">from you</span>
+          <h3>The place you're about to leave</h3>
+        </div>
+      </div>
+    </section>
+    <div class="steps">
+      <div class="step"><b>Speak or write</b><h3>Tell it your way</h3><p>Record a voice note or type it, in any language.</p></div>
+      <div class="step"><b>We help</b><h3>Our AI writes and translates it</h3><p>Personal details like phone numbers are kept out.</p></div>
+      <div class="step"><b>You sign it</b><h3>Check the words, pick a voice</h3><p>Then it goes out. Your recording is deleted.</p></div>
+    </div>
+    <div class="section-head" id="stories-section">
+      <h2>Postcards from everywhere</h2>
+      <span class="hand">newest first</span>
+    </div>
+    <div class="chips" id="moods" role="group" aria-label="Filter by mood"></div>
+    <div class="grid" id="stories" aria-live="polite">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+    <div class="empty hidden" id="empty"><span class="hand">Wish you were here</span><p>No postcards here yet. Yours could be the first one.</p><a class="btn" href="share.html">Tell your story</a></div>
+  </main>
+  <footer class="site"><div class="wrap"><span class="hand">Sent with love</span> · No ads. No trackers. Your recording is deleted once your story is written.</div></footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

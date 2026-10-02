@@ -1,0 +1,442 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Before I Leave - spoken stories turned into written, narrated postcards with AWS AI services (site and API served by one Lambda Function URL)
+
+Parameters:
+  CodeBucket:
+    Type: String
+    Description: S3 bucket holding the Lambda code zip
+  CodeKey:
+    Type: String
+    Description: S3 key of the Lambda code zip
+  AlertEmail:
+    Type: String
+    Description: Email address for usage alarms
+  DailyLimit:
+    Type: Number
+    Default: 30
+  TotalLimit:
+    Type: Number
+    Default: 200
+  AiModel:
+    Type: String
+    Description: Model ID used by the AI writing helper
+    Default: gemini-3.8-flash
+  AiEndpoint:
+    Type: String
+    Description: Base URL of the AI writing helper API
+    Default: https://generativelanguage.googleapis.com/v1beta
+
+Resources:
+  # ---------- storage ----------
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [POST]
+            AllowedOrigins: ["https://*.lambda-url.us-east-1.on.aws"]
+            AllowedHeaders: ["*"]
+            MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+          - Id: delete-leftover-recordings
+            Status: Enabled
+            Prefix: raw/
+            ExpirationInDays: 2
+          - Id: delete-leftover-transcripts
+            Status: Enabled
+            Prefix: transcripts/
+            ExpirationInDays: 2
+
+  StoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: N
+        - AttributeName: owner
+          AttributeType: S
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: byStatus
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: byOwner
+          KeySchema:
+            - AttributeName: owner
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # ---------- API ----------
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/bil-api
+      RetentionInDays: 7
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: api
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ApiLogGroup.Arn
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:Query, dynamodb:Scan]
+                Resource: [!GetAtt StoriesTable.Arn, !Sub "${StoriesTable.Arn}/index/byStatus", !Sub "${StoriesTable.Arn}/index/byOwner"]
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: [!Sub "${MediaBucket.Arn}/raw/*", !Sub "${MediaBucket.Arn}/photos/*"]
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: [!Sub "${MediaBucket.Arn}/narration/*", !Sub "${MediaBucket.Arn}/photos/*"]
+              - Effect: Allow
+                Action: s3:DeleteObject
+                Resource: [!Sub "${MediaBucket.Arn}/raw/*", !Sub "${MediaBucket.Arn}/photos/*", !Sub "${MediaBucket.Arn}/narration/*"]
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/before-i-leave/admin-key"
+              - Effect: Allow
+                Action: [translate:TranslateText, comprehend:DetectPiiEntities, comprehend:DetectDominantLanguage]
+                Resource: "*"
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertTopic
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:bil-worker"
+              - Effect: Allow
+                Action: kms:Decrypt
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: ApiLogGroup
+    Properties:
+      FunctionName: bil-api
+      Runtime: python3.13
+      Handler: api.handler
+      Code:
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
+      Role: !GetAtt ApiRole.Arn
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref StoriesTable
+          MEDIA_BUCKET: !Ref MediaBucket
+          WORKER_FUNCTION: bil-worker
+          ADMIN_PARAM: /before-i-leave/admin-key
+          ALERT_TOPIC: !Ref AlertTopic
+          DAILY_LIMIT: !Ref DailyLimit
+          TOTAL_LIMIT: !Ref TotalLimit
+
+  ApiUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt ApiFunction.Arn
+      AuthType: NONE
+
+  ApiUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+
+  ApiUrlInvokePermission: # public URLs also need InvokeFunction, limited to calls through the URL
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: "*"
+      InvokedViaFunctionUrl: true
+
+  # ---------- pipeline ----------
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/bil-worker
+      RetentionInDays: 7
+
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: worker
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt WorkerLogGroup.Arn
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:UpdateItem, dynamodb:PutItem]
+                Resource: !GetAtt StoriesTable.Arn
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/before-i-leave/ai-key"
+              - Effect: Allow
+                Action: kms:Decrypt
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
+              - Effect: Allow
+                Action: [s3:GetObject, s3:DeleteObject]
+                Resource: [!Sub "${MediaBucket.Arn}/raw/*", !Sub "${MediaBucket.Arn}/transcripts/*"]
+              - Effect: Allow
+                Action: s3:DeleteObject
+                Resource: !Sub "${MediaBucket.Arn}/narration/*"
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: [!Sub "${MediaBucket.Arn}/transcripts/*", !Sub "${MediaBucket.Arn}/narration/*"]
+              - Effect: Allow
+                Action: [transcribe:StartTranscriptionJob, transcribe:GetTranscriptionJob, transcribe:DeleteTranscriptionJob]
+                Resource: "*"
+              - Effect: Allow
+                Action: [translate:TranslateText, comprehend:DetectSentiment, comprehend:DetectKeyPhrases,
+                         comprehend:DetectPiiEntities, comprehend:DetectDominantLanguage, polly:SynthesizeSpeech]
+                Resource: "*"
+
+  WorkerFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: WorkerLogGroup
+    Properties:
+      FunctionName: bil-worker
+      Runtime: python3.13
+      Handler: worker.handler
+      Code:
+        S3Bucket: !Ref CodeBucket
+        S3Key: !Ref CodeKey
+      Role: !GetAtt WorkerRole.Arn
+      MemorySize: 512
+      Timeout: 300
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref StoriesTable
+          MEDIA_BUCKET: !Ref MediaBucket
+          AI_KEY_PARAM: /before-i-leave/ai-key
+          AI_MODEL: !Ref AiModel
+          AI_ENDPOINT: !Ref AiEndpoint
+
+  WorkerNoRetries:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref WorkerFunction
+      Qualifier: $LATEST
+      MaximumRetryAttempts: 0
+
+  AudioUploadedRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Recording uploaded - start transcription
+      EventPattern:
+        source: [aws.s3]
+        detail-type: [Object Created]
+        detail:
+          bucket:
+            name: [!Ref MediaBucket]
+          object:
+            key: [{ prefix: raw/ }]
+      Targets:
+        - Id: worker
+          Arn: !GetAtt WorkerFunction.Arn
+
+  TranscriptionDoneRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Transcription finished - build the story
+      EventPattern:
+        source: [aws.transcribe]
+        detail-type: [Transcribe Job State Change]
+        detail:
+          TranscriptionJobName: [{ prefix: bil- }]
+          TranscriptionJobStatus: [COMPLETED, FAILED]
+      Targets:
+        - Id: worker
+          Arn: !GetAtt WorkerFunction.Arn
+
+  AudioUploadedPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WorkerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt AudioUploadedRule.Arn
+
+  TranscriptionDonePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WorkerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt TranscriptionDoneRule.Arn
+
+  # ---------- alarms ----------
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: before-i-leave-alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+
+  WorkerRunawayAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: bil-worker-runaway
+      AlarmDescription: Worker ran more than 40 times in an hour (upload flood or event loop)
+      Namespace: AWS/Lambda
+      MetricName: Invocations
+      Dimensions: [{ Name: FunctionName, Value: !Ref WorkerFunction }]
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 40
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  ApiFloodAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: bil-api-flood
+      AlarmDescription: API called more than 2000 times in 5 minutes
+      Namespace: AWS/Lambda
+      MetricName: Invocations
+      Dimensions: [{ Name: FunctionName, Value: !Ref ApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 2000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  WorkerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: bil-worker-errors
+      AlarmDescription: Worker failed 3 or more times in an hour
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref WorkerFunction }]
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  # AI writing helper: the worker logs HELPER_RESULT for every story and HELPER_ALERT when a person is needed.
+  HelperFallbackFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref WorkerLogGroup
+      FilterPattern: '"HELPER_RESULT fallback"'
+      MetricTransformations:
+        - MetricNamespace: BeforeILeave
+          MetricName: HelperFallbacks
+          MetricValue: "1"
+
+  HelperAlertFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref WorkerLogGroup
+      FilterPattern: '"HELPER_ALERT"'
+      MetricTransformations:
+        - MetricNamespace: BeforeILeave
+          MetricName: HelperAlerts
+          MetricValue: "1"
+
+  HelperFallbackAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: bil-helper-fallbacks
+      AlarmDescription: AI writing helper fell back to plain translation 3 or more times in an hour
+      Namespace: BeforeILeave
+      MetricName: HelperFallbacks
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  HelperSetupAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: bil-helper-needs-attention
+      AlarmDescription: AI writing helper key rejected, model not found, or daily quota used up
+      Namespace: BeforeILeave
+      MetricName: HelperAlerts
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+Outputs:
+  SiteUrl:
+    Description: Website and API (the API lives under /api/)
+    Value: !GetAtt ApiUrl.FunctionUrl
+  MediaBucketName:
+    Value: !Ref MediaBucket

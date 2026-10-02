@@ -1,0 +1,11 @@
+/*
+!/.gitignore
+!/README.md
+!/app/
+!/docs/
+
+# Build output and caches
+/app/build/
+__pycache__/
+*.pyc
+.pytest_cache/

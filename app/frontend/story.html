@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Story - Before I Leave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="story">
+  <header class="site"><div class="airmail"></div><div class="wrap">
+    <a class="brand" href="index.html">Before <span>I Leave</span></a>
+    <nav class="row" id="nav"></nav>
+  </div></header>
+  <main class="wrap">
+    <article class="story-page" id="story">
+      <div id="cover"><div class="skeleton"></div></div>
+      <div class="back">
+        <div class="airmail"></div>
+        <div class="back-body">
+          <div class="message">
+            <div class="segmented hidden" id="langs" role="group" aria-label="Language"></div>
+            <h1 id="title"></h1>
+            <div class="player hidden" id="player">
+              <button type="button" class="play" id="play" aria-label="Play">&#9654;</button>
+              <div class="track">
+                <strong id="playLabel">Listen to this story</strong>
+                <input type="range" id="seek" min="0" max="100" value="0" step="0.1" aria-label="Position">
+                <div class="time"><span id="cur">0:00</span><span id="dur">--:--</span></div>
+              </div>
+              <audio id="audio" preload="none"></audio>
+            </div>
+            <p class="narr-pending hidden" id="narrPending">&#127911; The narrator is recording this story&hellip; it'll be ready in a moment.</p>
+            <p class="narr-note hidden" id="narrNote">&#127911; Narrated in English</p>
+            <div class="text" id="text"></div>
+          </div>
+          <aside class="address">
+            <div class="stamp" id="stamp"><i id="stampText"></i></div>
+            <div class="lines">
+              <div><b>From</b><span id="fromName"></span></div>
+              <div><b>To</b><span>whoever comes next</span></div>
+              <div><b>Posted</b><span id="posted"></span></div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn small" id="writeBackBtn">&#9993;&#65039; Write back</button>
+              <a class="btn secondary small" href="share.html">Tell your own story</a>
+              <button type="button" class="btn ghost small" id="shareBtn">Share this postcard</button>
+            </div>
+            <p class="hint" id="writeBackHint">Send a private postcard. Only the storyteller can read it.</p>
+            <details id="reportBox">
+              <summary class="hint">Report this story</summary>
+              <form id="reportForm">
+                <label for="reason">What's wrong?</label>
+                <input type="text" id="reason" maxlength="300" required>
+                <div class="actions"><button class="btn secondary small" type="submit">Send report</button></div>
+              </form>
+            </details>
+          </aside>
+        </div>
+      </div>
+      <section class="reply-card hidden" id="replyBox" aria-label="Write back">
+        <div class="airmail"></div>
+        <form class="body" id="replyForm" novalidate>
+          <span class="dear" id="dear">Dear storyteller,</span>
+          <label for="replyText" class="visually-hidden">Your postcard</label>
+          <textarea id="replyText" maxlength="500" placeholder="What did this story mean to you?"></textarea>
+          <div class="counter"><span id="replyCount">0</span> / 500</div>
+          <label class="check"><input type="checkbox" id="replyAnon"><span>Send anonymously <span class="hint">(they'll see "from a stranger")</span></span></label>
+          <p class="hint">Only the storyteller can read this. Phone numbers and other personal details are removed automatically.</p>
+          <div class="actions"><button type="submit" class="btn" id="sendReply">Send postcard</button><button type="button" class="btn ghost" id="cancelReply">Cancel</button></div>
+        </form>
+      </section>
+      <div class="status ok hidden" id="replySent" role="status" aria-live="polite"></div>
+    </article>
+    <div class="empty hidden" id="missing"><span class="hand">Lost in the post</span><p>This story isn't available.</p><a class="btn" href="index.html">See all stories</a></div>
+  </main>
+  <footer class="site"><div class="wrap"><span class="hand">Sent with love</span> · No ads. No trackers. Your recording is deleted once your story is written.</div></footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

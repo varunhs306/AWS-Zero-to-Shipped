@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Sign in - Before I Leave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="account">
+  <header class="site"><div class="airmail"></div><div class="wrap">
+    <a class="brand" href="index.html">Before <span>I Leave</span></a>
+    <nav class="row" id="nav"></nav>
+  </div></header>
+  <main class="wrap narrow">
+    <section class="hero">
+      <span class="kicker">Hello,</span>
+      <h1 id="heroTitle">Just a name and a password.</h1>
+      <p class="lead" id="heroLead">No email needed. Keep your password safe: without an email we can't reset it.</p>
+    </section>
+    <div class="status hidden" id="goodbye" role="status"></div>
+    <div id="authArea">
+    <div class="segmented" role="group" aria-label="Sign in or create account">
+      <button type="button" id="tabIn" aria-pressed="true">Sign in</button>
+      <button type="button" id="tabUp" aria-pressed="false">Create account</button>
+    </div>
+    <form class="panel" id="authForm" novalidate>
+      <label for="username">Username</label>
+      <input type="text" id="username" maxlength="24" autocomplete="username" required>
+      <p class="hint">Shown on your stories. 3-24 letters, numbers, dot, dash or underscore.</p>
+      <label for="password">Password</label>
+      <input type="password" id="password" minlength="8" autocomplete="current-password" required>
+      <div class="actions"><button class="btn" type="submit" id="authBtn">Sign in</button></div>
+      <div class="status hidden" id="authStatus" role="status" aria-live="polite"></div>
+    </form>
+    </div>
+    <div class="hidden" id="manage">
+      <div class="panel">
+        <div class="actions"><a class="btn" href="mine.html">My stories</a><button type="button" class="btn secondary" id="signOut">Sign out</button></div>
+      </div>
+      <form class="panel" id="deleteForm" novalidate>
+        <h2>Delete my account</h2>
+        <p>This deletes your account and all your stories, including their narration. It can't be undone.</p>
+        <label for="delPassword">Your password</label>
+        <input type="password" id="delPassword" autocomplete="current-password" required>
+        <div class="actions"><button class="btn danger" type="submit" id="delBtn">Delete my account</button></div>
+        <div class="status hidden" id="delStatus" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </main>
+  <footer class="site"><div class="wrap"><span class="hand">Sent with love</span> · No ads. No trackers. Your recording is deleted once your story is written.</div></footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

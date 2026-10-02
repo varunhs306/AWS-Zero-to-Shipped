@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Check your story - Before I Leave</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="edit">
+  <header class="site"><div class="airmail"></div><div class="wrap">
+    <a class="brand" href="index.html">Before <span>I Leave</span></a>
+    <nav class="row" id="nav"></nav>
+  </div></header>
+  <main class="wrap medium">
+    <section class="hero">
+      <span class="kicker">Before you sign it,</span>
+      <h1>Does this sound like you?</h1>
+      <p class="lead">This is your story as our AI writing helper wrote it down. Fix any words, then sign and send. Separate paragraphs with an empty line.</p>
+    </section>
+    <p class="empty" id="loading">Loading your story...</p>
+    <form id="editForm" class="hidden" novalidate>
+      <div class="panel">
+        <p class="status hidden" id="notes"></p>
+        <div class="two">
+          <div>
+            <label for="title">Title (English)</label>
+            <input type="text" id="title" maxlength="120">
+          </div>
+          <div id="origTitleBox">
+            <label for="origTitle">Title (<span class="origLang"></span>)</label>
+            <input type="text" id="origTitle" maxlength="120">
+          </div>
+        </div>
+        <div class="two">
+          <div>
+            <label for="mood">Mood</label>
+            <select id="mood"></select>
+          </div>
+          <div>
+            <label for="voice">Narration voice</label>
+            <select id="voice"><option value="female">Female voice</option><option value="male">Male voice</option></select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="anon"><span><strong>Post anonymously</strong> <span class="hint">(your postcard says "from a stranger")</span></span></label>
+      </div>
+      <div class="panel">
+        <div class="two">
+          <div id="origBox">
+            <label for="originalText">What you said (<span class="origLang"></span>)</label>
+            <textarea id="originalText" maxlength="5000"></textarea>
+            <div class="actions"><button type="button" class="btn secondary small" id="retranslate">Translate my changes into English</button></div>
+          </div>
+          <div>
+            <label for="englishText">English</label>
+            <textarea id="englishText" maxlength="5000"></textarea>
+          </div>
+        </div>
+        <p class="hint">Up to 5,000 characters in each language.</p>
+      </div>
+      <div class="panel">
+        <div class="actions">
+          <button type="submit" class="btn" id="publish">Sign and send</button>
+          <a class="btn secondary" href="mine.html">Save for later</a>
+        </div>
+        <div class="status hidden" id="status" role="status" aria-live="polite"></div>
+      </div>
+    </form>
+  </main>
+  <footer class="site"><div class="wrap"><span class="hand">Sent with love</span> · No ads. No trackers. Your recording is deleted once your story is written.</div></footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
